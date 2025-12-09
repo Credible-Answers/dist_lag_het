@@ -1,4 +1,4 @@
-Package: dist_lag_het
+Package: DistLagHet
 Type: Package
 Title: Treatment Effect Estimation in Complex Designs
 Version: 0.1.0
