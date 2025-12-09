@@ -34,6 +34,7 @@ The package provides three model specifications:
 
 ```r
 # Base model
+library(DistLagHet)
 result <- estim_RC_model_unified(
   K = 2,
   data = data,
