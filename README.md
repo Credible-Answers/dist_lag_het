@@ -59,10 +59,6 @@ result_boot <- estim_RC_model_unified(
 summary_RC_model(result_boot)
 ```
 
-#### Direct Model Functions
-
-
-
 ## Data Format
 
 Your data should be in long format with the following columns:
