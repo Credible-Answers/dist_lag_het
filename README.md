@@ -64,7 +64,7 @@ summary_RC_model(result_boot)
 This example replicates the application from Section 5.3 of the paper, which studies the effect of the number of daily newspapers on presidential election turnout in US counties from 1868 to 1928.
 
 ```r
-library(dist_lag_het)
+library(DistLagHet)
 
 # Load the data
 data <- read.csv("for_estim_RC_model.csv", header = TRUE)
