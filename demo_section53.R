@@ -112,16 +112,6 @@ results_table <- data.frame(
 )
 print(results_table, row.names = FALSE)
 
-# ============================================================================
-# Interpretation
-# ============================================================================
 
-cat("\n=== INTERPRETATION ===\n")
-cat("beta_0:", round(result_boot$B_hat[1], 4),
-    "- Effect of an additional daily newspaper on turnout in the same period\n")
-cat("beta_1:", round(result_boot$B_hat[2], 4),
-    "- Effect of an additional daily newspaper on turnout one period later\n")
-cat("beta_2:", round(result_boot$B_hat[3], 4),
-    "- Effect of an additional daily newspaper on turnout two periods later\n")
 
 cat("\nNote: Bootstrap runtime with 200 replications:", round(bootstrap_time, 1), "seconds\n")
