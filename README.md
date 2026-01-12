@@ -116,7 +116,7 @@ summary_RC_model(result_boot)
 
 The model estimates the effect of having an additional daily newspaper on presidential turnout, allowing for effects of current treatment (`beta_0`) and up to two lags (`beta_1`, `beta_2`).
 
-### Results
+### Results with 200 bootstraps
 
 | Coefficient | Estimate | Std. Error | t-stat | 95% CI |
 |-------------|----------|------------|--------|--------|
