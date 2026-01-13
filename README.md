@@ -194,7 +194,7 @@ MIT License - see LICENSE file for details
 If you use this package in your research, please cite:
 
 ```
-de Chaisemartin, Clement and d'Haultfoeuille, Xavier, Treatment-Effect Estimation in Complex Designs under a Parallel-trends Assumption (September 04, 2025). Available at SSRN: https://ssrn.com/abstract=5440734 or http://dx.doi.org/10.2139/ssrn.5440734
+de Chaisemartin, Clement and D'Haultfoeuille, Xavier, Treatment-Effect Estimation in Complex Designs under a Parallel-trends Assumption (September 04, 2025). Available at SSRN: https://ssrn.com/abstract=5440734 or http://dx.doi.org/10.2139/ssrn.5440734
 ```
 
 ## Support
@@ -205,4 +205,4 @@ For issues and questions:
 
 ## References
 
-de Chaisemartin, Clement and d'Haultfoeuille, Xavier, Treatment-Effect Estimation in Complex Designs under a Parallel-trends Assumption (September 04, 2025). Available at SSRN: https://ssrn.com/abstract=5440734 or http://dx.doi.org/10.2139/ssrn.5440734
+de Chaisemartin, Clement and D'Haultfoeuille, Xavier, Treatment-Effect Estimation in Complex Designs under a Parallel-trends Assumption (September 04, 2025). Available at SSRN: https://ssrn.com/abstract=5440734 or http://dx.doi.org/10.2139/ssrn.5440734
