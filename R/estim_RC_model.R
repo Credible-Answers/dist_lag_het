@@ -106,6 +106,7 @@ estim_RC_model_unified <- function(K = NULL, data, group_col, deltaY_col, deltaD
       deltaD_col = deltaD_col,
       D_col = D_col,
       X_cols = X_cols,
+      weights = weights,
       K = K,
       B = B,
       conf_level = conf_level,
@@ -215,6 +216,11 @@ estim_RC_model_full <- function(K = NULL, data, group_col, deltaY_col, deltaD_co
 
   # Determine T_periods
   T_periods <- max(group_sizes)
+  n_short <- sum(group_sizes < T_periods)
+  if (n_short > 0) {
+    warning(sprintf("%d of %d groups have fewer than %d rows and are not used by the full-dynamics model",
+                    n_short, nb_c, T_periods))
+  }
 
   # Extract numeric data
   DeltaY <- as.numeric(data[[deltaY_col]])
@@ -343,6 +349,7 @@ estim_RC_model_interactions <- function(K, data, group_col, deltaY_col, deltaD_c
 #' @param deltaD_col Character. Name of the column for ΔD.
 #' @param D_col Character. Name of the column for D.
 #' @param X_cols Character vector. Names of columns for covariates.
+#' @param weights Numeric vector. Group weights as passed to the estimator (NULL = uniform).
 #' @param K Integer. Number of lags (required for "base" and "interactions" models).
 #' @param B Integer. Number of bootstrap iterations.
 #' @param conf_level Numeric. Confidence level for intervals.
@@ -357,7 +364,7 @@ estim_RC_model_interactions <- function(K, data, group_col, deltaY_col, deltaD_c
 #'
 #' @keywords internal
 .bootstrap_RC_model_internal <- function(result, data, group_col, deltaY_col, deltaD_col,
-                                         D_col, X_cols, K = NULL, B = 1000,
+                                         D_col, X_cols, weights = NULL, K = NULL, B = 1000,
                                          conf_level = 0.95, verbose = TRUE,
                                          same_sample = FALSE) {
 
@@ -376,10 +383,14 @@ estim_RC_model_interactions <- function(K, data, group_col, deltaY_col, deltaD_c
   # Get unique groups
   list_groups <- unique(data[[group_col]])
   n_groups <- length(list_groups)
+  # the estimators read `weights` in the order of the sorted levels of factor(group)
+  group_levels <- levels(factor(data[[group_col]]))
+  w_user <- if (is.null(weights)) rep(1, n_groups) else weights
 
   # Storage for bootstrap results
   n_coef <- length(result$B_hat)
   Bhat_boot <- matrix(0, B, n_coef)
+  unid <- matrix(FALSE, B, n_coef)  # TRUE where no resampled group identifies the coefficient
 
   # Progress indicator
   if (verbose) {
@@ -392,8 +403,8 @@ estim_RC_model_interactions <- function(K, data, group_col, deltaY_col, deltaD_c
     # Sample groups with replacement
     groups_boot <- sample(list_groups, n_groups, replace = TRUE)
 
-    # Calculate weights (how many times each group appears)
-    weights <- as.numeric(table(factor(groups_boot, levels = list_groups)))
+    # Replicate weights: user weight x number of times the group is drawn
+    weights <- w_user * as.numeric(table(factor(groups_boot, levels = group_levels)))
 
     # Estimate model on bootstrap sample
     tryCatch({
@@ -436,7 +447,9 @@ estim_RC_model_interactions <- function(K, data, group_col, deltaY_col, deltaD_c
         )
       }
 
-      Bhat_boot[b, ] <- result_boot$B_hat
+      # a coefficient that no resampled group identifies (Nobs = 0) is missing, not 0
+      unid[b, ] <- result_boot$Nobs == 0
+      Bhat_boot[b, ] <- ifelse(unid[b, ], NA, result_boot$B_hat)
 
     }, error = function(e) {
       Bhat_boot[b, ] <- NA
@@ -451,8 +464,15 @@ estim_RC_model_interactions <- function(K, data, group_col, deltaY_col, deltaD_c
     close(pb)
   }
 
+  # Remove iterations in which a coefficient is not identified
+  n_unid <- colSums(unid)
+  if (any(n_unid > 0)) {
+    warning(sprintf("%s bootstrap iterations removed because no resampled group identifies %s",
+                    paste(n_unid[n_unid > 0], collapse = ", "),
+                    paste(names(result$B_hat)[n_unid > 0], collapse = ", ")))
+  }
   # Remove failed iterations
-  n_failed <- sum(!complete.cases(Bhat_boot))
+  n_failed <- sum(!complete.cases(Bhat_boot) & rowSums(unid) == 0)
   if (n_failed > 0) {
     warning(sprintf("%d bootstrap iterations failed and were removed", n_failed))
   }

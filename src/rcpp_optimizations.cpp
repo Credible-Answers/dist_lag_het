@@ -4,6 +4,20 @@ using namespace Rcpp;
 
 // [[Rcpp::depends(RcppEigen)]]
 
+// The covariate coefficients (the time effects) solve (X' Pi X) gamma = X' Pi DeltaY. If X' Pi X is singular
+// they are not identified (Assumption 8 of the paper fails), and neither are the betas: warn instead of
+// returning the output of a singular solve.
+static void check_time_effects_identified(const Eigen::MatrixXd& XtX) {
+  if (XtX.rows() == 0) return;
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(XtX, Eigen::EigenvaluesOnly);
+  double ev_max = eig.eigenvalues().maxCoeff(), ev_min = eig.eigenvalues().minCoeff();
+  if (!(ev_min > 1e-10 * ev_max)) {
+    Rcpp::warning("the coefficients of X_cols (the time effects) are not identified: X' Pi X is singular "
+                  "(smallest/largest eigenvalue %.2g); Assumption 8 fails and the estimates are not meaningful",
+                  ev_max > 0 ? ev_min / ev_max : 0.0);
+  }
+}
+
 //' Build M matrix using C++ (vectorized)
 //'
 //' Fast C++ implementation of M matrix construction for RC model.
@@ -305,6 +319,7 @@ List estim_RC_model_cpp_full(int K, IntegerVector list_g_data, IntegerVector lis
     Eigen::Map<Eigen::VectorXd> newY_eigen(as<Eigen::Map<Eigen::VectorXd>>(newY));
 
     Eigen::MatrixXd XtX = newX_eigen.transpose() * newX_eigen;
+    check_time_effects_identified(XtX);
     Eigen::VectorXd XtY = newX_eigen.transpose() * newY_eigen;
 
     Eigen::VectorXd gamma_eigen = XtX.ldlt().solve(XtY);
@@ -567,6 +582,7 @@ List estim_RC_model_full_cpp(int T_periods, IntegerVector list_g_data, IntegerVe
     Eigen::Map<Eigen::VectorXd> newY_eigen(as<Eigen::Map<Eigen::VectorXd>>(newY));
 
     Eigen::MatrixXd XtX = newX_eigen.transpose() * newX_eigen;
+    check_time_effects_identified(XtX);
     Eigen::VectorXd XtY = newX_eigen.transpose() * newY_eigen;
 
     Eigen::VectorXd gamma_eigen = XtX.ldlt().solve(XtY);
@@ -611,11 +627,8 @@ List estim_RC_model_full_cpp(int T_periods, IntegerVector list_g_data, IntegerVe
     }
 
     if (is_never_switcher) {
-      // For never-switchers, all coefficients identified with beta = 0
-      for (int k = 0; k < dim; k++) {
-        ind_avg(j, k) = weights[j];
-        beta_bar_hat(j, k) = 0.0;
-      }
+      // Never-switchers have M_g = 0: no e_k is in Im(M_g'), so they are not in S_k
+      // (paper, eq. 20). They still identify the time effects in Phase 1; ind_avg(j, .) stays 0.
     } else {
       // Get M_g from Phase 1
       NumericMatrix M_g(dim, dim);
@@ -868,6 +881,7 @@ List estim_RC_model_interactions_cpp(int K, IntegerVector list_g_data, IntegerVe
     Eigen::Map<Eigen::VectorXd> newY_eigen(as<Eigen::Map<Eigen::VectorXd>>(newY));
 
     Eigen::MatrixXd XtX = newX_eigen.transpose() * newX_eigen;
+    check_time_effects_identified(XtX);
     Eigen::VectorXd XtY = newX_eigen.transpose() * newY_eigen;
 
     Eigen::VectorXd gamma_eigen = XtX.ldlt().solve(XtY);
